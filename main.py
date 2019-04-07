@@ -14,22 +14,22 @@ test_labels=np.zeros((1500))
 #         prediction_writer.writerow([i+1])
 
 mlp_classifier=MLPClassifier(
-    hidden_layer_sizes=(30,25),
+    hidden_layer_sizes=([20,20]),
     activation='logistic',
     solver='sgd',
     alpha=0.001,
-    batch_size=200,
+    batch_size=200, #200: 1439, .984
     learning_rate='adaptive',
-    learning_rate_init=0.003,
+    learning_rate_init=0.004,
     power_t=0.5,#pt learning_rate=invscaling
-    max_iter=1000,
-    shuffle=True,
+    max_iter=550,
+    shuffle=False,
     random_state=None,
-    tol=0.00003,
+    tol=0.000003,
     momentum=0.7,
     early_stopping=False,
     validation_fraction=0.1,
-    n_iter_no_change=7
+    n_iter_no_change=10
 )
 
 loaded_labels=np.loadtxt('data/train_labels.csv', 'int')
@@ -41,6 +41,9 @@ loaded_samples=np.loadtxt('data/train_samples.csv', delimiter=',')
 j=0
 k=0
 
+x=0#new
+rare_labels=np.zeros(0)#new
+rare_data=np.zeros((0,4096))#new
 for i in range(loaded_samples.shape[0]): #original
     if i%10:
         train_data[j]=loaded_samples[i]
@@ -50,9 +53,40 @@ for i in range(loaded_samples.shape[0]): #original
         test_data[k]=loaded_samples[i]
         test_labels[k]=loaded_labels[i]
         k+=1
+    if loaded_labels[i] in [5,6,7]:
+        rare_data=np.append(rare_data,loaded_samples[i])
+        rare_labels=np.append(rare_labels,loaded_labels[i])
+        x+=1
 
+rare_data=rare_data.reshape((int(rare_data.size/4096),4096))#new
+print(rare_data.shape)#new
+train_data=np.append(train_data,rare_data)#new
+train_labels=np.append(train_labels,rare_labels)#new
+train_data=np.append(train_data,rare_data)#new
+train_labels=np.append(train_labels,rare_labels)#new
+train_data=np.append(train_data,rare_data)#new
+train_labels=np.append(train_labels,rare_labels)#new
+train_data=train_data.reshape((13500+432*3,4096))
+print(train_data.shape)#new
 mlp_classifier.fit(train_data,train_labels)
 
+# x=0
+# rare_labels=np.zeros(0)
+# rare_data=np.zeros((0,4096))
+# for i in range(loaded_samples.shape[0]):
+#     if loaded_labels[i] in [5,6,7]:
+#         rare_data=np.append(rare_data,loaded_samples[i])
+#         rare_labels=np.append(rare_labels,loaded_labels[i])
+#         x+=1
+# rare_data=rare_data.reshape((int(rare_data.size/4096),4096))
+# print(rare_data.shape[0])
+# loaded_samples=np.append(loaded_samples,rare_data)
+# loaded_labels=np.append(loaded_labels,rare_labels)
+# loaded_samples=np.append(loaded_samples,rare_data)
+# loaded_labels=np.append(loaded_labels,rare_labels)
+# #loaded_samples=np.append(loaded_samples,rare_data)
+# #loaded_labels=np.append(loaded_labels,rare_labels)
+# loaded_samples=loaded_samples.reshape((15000+rare_data.shape[0]*2,4096))
 # mlp_classifier.fit(loaded_samples,loaded_labels)
 #
 # test_samples=np.loadtxt('data/test_samples.csv', delimiter=',')
@@ -87,7 +121,7 @@ j=0
 for i in range(predicted_labels.shape[0]):
     if predicted_labels[i]==train_labels[i]:
         j+=1
-print(j,j/13500)
+print(j,j/predicted_labels.shape[0])
 for i in range(train_labels.shape[0]):
     y=predicted_labels[i]
     x=train_labels[i]
@@ -132,4 +166,23 @@ print(confusion_matrix)
 #     early_stopping=False,
 #     validation_fraction=0.1,
 #     n_iter_no_change=7
+# )
+
+# mlp_classifier=MLPClassifier( #1454 0.998
+#     hidden_layer_sizes=(20,20),
+#     activation='relu',
+#     solver='sgd',
+#     alpha=0.00001,
+#     batch_size=200,
+#     learning_rate='adaptive',
+#     learning_rate_init=0.003,
+#     power_t=0.5,#pt learning_rate=invscaling
+#     max_iter=950,
+#     shuffle=True,
+#     random_state=None,
+#     tol=0.00003,
+#     momentum=0.7,
+#     early_stopping=False,
+#     validation_fraction=0.1,
+#     n_iter_no_change=10
 # )
